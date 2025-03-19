@@ -1,0 +1,76 @@
+name: workflow
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 9 * * *'
+
+jobs:
+  run-data-pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: start message
+        run: echo "Starting data pipeline"
+        
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10.8'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Create directories
+        run: |
+          mkdir -p data/plots
+          mkdir -p data/model
+
+      - name: Run data pipeline
+        run: |
+          cd data
+          python RNN.py
+
+      - name: check for changes
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add .
+          git diff --staged --quiet || echo "changes = true" >> $GITHUB_ENV
+
+      - name: commit and push if changes
+        if: env.changes == 'true'
+        run: |
+          git commit -m "update data hyperparameters"
+          git push
+
+      - name: debug
+        run: |
+          echo "Checking contetns of the directory"
+          ls -R data/RNN.py
+   #ziel war es die plots und das modell zu speichern. Lief aber schief
+      - name: Save generated plot
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-plot
+          path: data/plots/training_history.png
+
+      - name: Save confusion matrix as png
+        uses: actions/upload-artifact@v4
+        with:
+          name: confusion-matrix
+          path: data/plots/matrix_history.png
+
+      - name: Save model
+        uses: actions/upload-artifact@v4
+        with:
+          name: model (test)
+          path: data/model/cnn_cifar10.h5
