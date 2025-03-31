@@ -37,7 +37,7 @@ jobs:
       - name: Run data pipeline
         run: |
           cd data
-          python RNN.py
+          python Aufgab2_RNN.py
 
       - name: check for changes
         run: |
@@ -55,7 +55,7 @@ jobs:
       - name: debug
         run: |
           echo "Checking contetns of the directory"
-          ls -R data/RNN.py
+          ls -R data/Aufgab2_RNN.py
    #ziel war es die plots und das modell zu speichern. Lief aber schief
       - name: Save generated plot
         uses: actions/upload-artifact@v4
